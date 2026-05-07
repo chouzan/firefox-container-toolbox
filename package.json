@@ -1,0 +1,32 @@
+{
+  "name": "container-toolbox",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Name-based container management with STG integration and Google Drive sync",
+  "type": "module",
+  "scripts": {
+    "dev": "npm run res:build && npm run res:watch & npm run build:watch & web-ext run --source-dir=dist --firefox=firefox",
+    "build": "npm run res:build && node esbuild.config.mjs",
+    "build:watch": "node esbuild.config.mjs --watch",
+    "res:build": "rescript build",
+    "res:watch": "rescript build -w",
+    "res:clean": "rescript clean",
+    "check": "npm run res:build && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit",
+    "lint": "web-ext lint --source-dir=dist",
+    "format": "rescript format && prettier --write 'src/**/*.{svelte,ts,html,css}'",
+    "format:check": "rescript format --check && prettier --check 'src/**/*.{svelte,ts,html,css}'",
+    "validate": "npm run check && npm run build && npm run lint && npm run format:check"
+  },
+  "devDependencies": {
+    "@rescript/core": "^1.6.1",
+    "esbuild": "^0.25.0",
+    "esbuild-svelte": "^0.9.4",
+    "prettier": "^3.8.3",
+    "prettier-plugin-svelte": "^3.5.1",
+    "rescript": "^12.2.0",
+    "svelte": "^5.55.5",
+    "svelte-check": "^4.4.8",
+    "typescript": "^5.7.0",
+    "web-ext": "^8.4.0"
+  }
+}

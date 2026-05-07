@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# TypeScript
+*.tsbuildinfo
+
+# ReScript compiled output & cache
+*.res.mjs
+*.gen.tsx
+lib/bs/
+lib/ocaml/
+lib/rescript.lock
+
+# web-ext
+web-ext-artifacts/
+*.zip
+*.xpi
+.web-extension-id
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment / secrets
+.env
+.env.local
+
+# Project instructions (local only)
+CLAUDE.md
