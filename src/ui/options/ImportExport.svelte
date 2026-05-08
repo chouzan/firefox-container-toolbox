@@ -81,43 +81,41 @@
   }
 </script>
 
-<section class="card">
-  <h2>Import / Export</h2>
-  <div class="btn-group">
-    <button class="btn btn-secondary" onclick={exportConfig}
-      >Export Config</button
-    >
-    <button class="btn btn-secondary" onclick={() => fileInput.click()}
-      >Import Config</button
-    >
-    <button class="btn btn-primary" disabled={reconciling} onclick={reconcile}>
-      {reconciling ? "Reconciling..." : "Reconcile"}
-    </button>
+<div class="card bg-base-200">
+  <div class="card-body p-4 gap-3">
+    <h2 class="text-xs font-semibold uppercase tracking-wide opacity-60">
+      Import / Export
+    </h2>
+    <div class="flex gap-2 flex-wrap">
+      <button class="btn btn-soft btn-sm" onclick={exportConfig}
+        >Export Config</button
+      >
+      <button class="btn btn-soft btn-sm" onclick={() => fileInput.click()}
+        >Import Config</button
+      >
+      <button
+        class="btn btn-primary btn-sm"
+        disabled={reconciling}
+        onclick={reconcile}
+      >
+        {reconciling ? "Reconciling..." : "Reconcile"}
+      </button>
+    </div>
+    <input
+      type="file"
+      accept=".json"
+      bind:this={fileInput}
+      onchange={handleFile}
+      hidden
+    />
+    {#if statusMsg}
+      <p
+        class="text-xs"
+        class:text-success={!statusIsError}
+        class:text-error={statusIsError}
+      >
+        {statusMsg}
+      </p>
+    {/if}
   </div>
-  <input
-    type="file"
-    accept=".json"
-    bind:this={fileInput}
-    onchange={handleFile}
-    hidden
-  />
-  {#if statusMsg}
-    <p class="status-msg" class:error={statusIsError}>{statusMsg}</p>
-  {/if}
-</section>
-
-<style>
-  .btn-group {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .status-msg {
-    font-size: 12px;
-    color: var(--success);
-  }
-  .status-msg.error {
-    color: var(--danger);
-  }
-</style>
+</div>

@@ -165,258 +165,146 @@
   load();
 </script>
 
-<section class="card">
-  <div class="card-header">
-    <h2>Containers</h2>
-    <button class="btn btn-primary btn-sm" onclick={openAdd}>Add</button>
-  </div>
+<div class="card bg-base-200">
+  <div class="card-body p-4 gap-3">
+    <div class="flex justify-between items-center">
+      <h2 class="text-xs font-semibold uppercase tracking-wide opacity-60">
+        Containers
+      </h2>
+      <button class="btn btn-primary btn-xs" onclick={openAdd}>Add</button>
+    </div>
 
-  {#if containers.length === 0 && !showForm}
-    <p class="muted">No containers. Add one or import a config.</p>
-  {/if}
+    {#if containers.length === 0 && !showForm}
+      <p class="opacity-50 text-sm">
+        No containers. Add one or import a config.
+      </p>
+    {/if}
 
-  <ul class="item-list">
-    {#each containers as c, i (c.cookieStoreId)}
-      <li
-        class="container-row"
-        class:dragging={draggedIdx === i}
-        class:drag-over={dragOverIdx === i}
-        ondragover={(e) => onDragOver(e, i)}
-        ondragleave={onDragLeave}
-        ondrop={(e) => onDrop(e, i)}
-      >
-        <div
-          class="usercontext-icon"
-          data-identity-icon={c.icon}
-          data-identity-color={c.color}
-        ></div>
-        <span class="name">{c.name}</span>
-        <span class="id">{shortId(c.cookieStoreId)}</span>
-        <span class="row-actions">
-          <button class="btn btn-secondary btn-sm" onclick={() => openEdit(c)}
-            >Edit</button
+    <ul class="flex flex-col gap-0.5">
+      {#each containers as c, i (c.cookieStoreId)}
+        <li
+          class="flex items-center gap-2.5 px-2 py-1.5 rounded hover:bg-base-300 group"
+          class:opacity-40={draggedIdx === i}
+          class:border-t-2={dragOverIdx === i}
+          class:border-primary={dragOverIdx === i}
+          ondragover={(e) => onDragOver(e, i)}
+          ondragleave={onDragLeave}
+          ondrop={(e) => onDrop(e, i)}
+        >
+          <div
+            class="usercontext-icon"
+            data-identity-icon={c.icon}
+            data-identity-color={c.color}
+          ></div>
+          <span class="flex-1 text-sm">{c.name}</span>
+          <span class="font-mono text-[11px] opacity-40"
+            >{shortId(c.cookieStoreId)}</span
           >
-          <button
-            class="btn btn-danger btn-sm"
-            onclick={() => deleteContainer(c)}>Del</button
+          <span
+            class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
           >
-        </span>
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <span
-          class="drag-grip"
-          role="button"
-          tabindex="0"
-          draggable="true"
-          title="Drag to reorder"
-          ondragstart={(e) => onGripDragStart(e, i)}
-          ondragend={onDragEnd}
-        ></span>
-      </li>
-    {/each}
-  </ul>
+            <button class="btn btn-soft btn-xs" onclick={() => openEdit(c)}
+              >Edit</button
+            >
+            <button
+              class="btn btn-error btn-outline btn-xs"
+              onclick={() => deleteContainer(c)}>Del</button
+            >
+          </span>
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
+          <span
+            class="flex flex-col gap-0.5 cursor-grab px-0.5 opacity-20 group-hover:opacity-60 transition-opacity"
+            role="button"
+            tabindex="0"
+            draggable="true"
+            title="Drag to reorder"
+            ondragstart={(e) => onGripDragStart(e, i)}
+            ondragend={onDragEnd}
+          >
+            <span class="w-2.5 h-0.5 bg-current rounded-sm"></span>
+            <span class="w-2.5 h-0.5 bg-current rounded-sm"></span>
+            <span class="w-2.5 h-0.5 bg-current rounded-sm"></span>
+          </span>
+        </li>
+      {/each}
+    </ul>
 
-  {#if showForm}
-    <div class="container-form">
-      <div class="form-row">
+    {#if showForm}
+      <div class="flex flex-col gap-2.5 p-3 bg-base-300 rounded-lg">
         <input
           type="text"
-          class="form-name-input"
+          class="input input-sm input-bordered w-full"
           placeholder="Container name"
           bind:value={formName}
           onkeydown={onFormKeydown}
         />
-      </div>
-      <div class="form-row">
-        <span class="form-label">Colour</span>
-        <div class="picker-grid">
-          {#each containerColors as color}
-            <button
-              type="button"
-              class="picker-option"
-              class:selected={selectedColor === color}
-              title={color}
-              onclick={() => (selectedColor = color)}
-            >
-              <div
-                class="usercontext-icon"
-                data-identity-icon="circle"
-                data-identity-color={color}
-              ></div>
-            </button>
-          {/each}
+        <div class="flex flex-col gap-1.5">
+          <span
+            class="text-[11px] font-semibold uppercase tracking-wide opacity-50"
+            >Colour</span
+          >
+          <div class="flex flex-wrap gap-1">
+            {#each containerColors as color}
+              <button
+                type="button"
+                class="w-8 h-8 flex items-center justify-center rounded border-2 p-0 cursor-pointer transition-colors"
+                class:border-primary={selectedColor === color}
+                class:border-transparent={selectedColor !== color}
+                class:bg-base-100={selectedColor === color}
+                title={color}
+                onclick={() => (selectedColor = color)}
+              >
+                <div
+                  class="usercontext-icon"
+                  data-identity-icon="circle"
+                  data-identity-color={color}
+                ></div>
+              </button>
+            {/each}
+          </div>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <span
+            class="text-[11px] font-semibold uppercase tracking-wide opacity-50"
+            >Icon</span
+          >
+          <div class="flex flex-wrap gap-1">
+            {#each containerIcons as icon}
+              <button
+                type="button"
+                class="w-8 h-8 flex items-center justify-center rounded border-2 p-0 cursor-pointer transition-colors"
+                class:border-primary={selectedIcon === icon}
+                class:border-transparent={selectedIcon !== icon}
+                class:bg-base-100={selectedIcon === icon}
+                title={icon}
+                onclick={() => (selectedIcon = icon)}
+              >
+                <div
+                  class="usercontext-icon"
+                  data-identity-icon={icon}
+                  data-identity-color="toolbar"
+                ></div>
+              </button>
+            {/each}
+          </div>
+        </div>
+        <div class="flex gap-2 justify-end">
+          <button class="btn btn-primary btn-xs" onclick={saveForm}>Save</button
+          >
+          <button class="btn btn-soft btn-xs" onclick={closeForm}>Cancel</button
+          >
         </div>
       </div>
-      <div class="form-row">
-        <span class="form-label">Icon</span>
-        <div class="picker-grid">
-          {#each containerIcons as icon}
-            <button
-              type="button"
-              class="picker-option"
-              class:selected={selectedIcon === icon}
-              title={icon}
-              onclick={() => (selectedIcon = icon)}
-            >
-              <div
-                class="usercontext-icon"
-                data-identity-icon={icon}
-                data-identity-color="toolbar"
-              ></div>
-            </button>
-          {/each}
-        </div>
-      </div>
-      <div class="form-actions">
-        <button class="btn btn-primary btn-sm" onclick={saveForm}>Save</button>
-        <button class="btn btn-secondary btn-sm" onclick={closeForm}
-          >Cancel</button
-        >
-      </div>
-    </div>
-  {/if}
+    {/if}
 
-  {#if statusMsg}
-    <p class="status-msg" class:error={statusIsError}>{statusMsg}</p>
-  {/if}
-</section>
-
-<style>
-  .item-list {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .container-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px 8px;
-    border-radius: var(--radius);
-  }
-  .container-row:hover {
-    background: var(--bg-hover);
-  }
-  .container-row.dragging {
-    opacity: 0.4;
-  }
-  .container-row.drag-over {
-    border-top: 2px solid var(--accent);
-  }
-
-  .container-row .name {
-    flex: 1;
-  }
-  .container-row .id {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-
-  .row-actions {
-    display: flex;
-    gap: 4px;
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
-  .container-row:hover .row-actions {
-    opacity: 1;
-  }
-
-  .drag-grip {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    cursor: grab;
-    padding: 4px 2px;
-    opacity: 0.3;
-    transition: opacity 0.15s;
-  }
-  .container-row:hover .drag-grip {
-    opacity: 0.7;
-  }
-  .drag-grip::before,
-  .drag-grip::after {
-    content: "";
-    display: block;
-    width: 10px;
-    height: 2px;
-    background: var(--text-muted);
-    border-radius: 1px;
-  }
-  .drag-grip::before {
-    box-shadow: 0 4px 0 var(--text-muted);
-  }
-
-  .container-form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 12px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-  }
-
-  .form-row {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .form-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .form-name-input {
-    width: 100%;
-  }
-
-  .picker-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-
-  .picker-option {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius);
-    border: 2px solid transparent;
-    background: transparent;
-    cursor: pointer;
-    padding: 0;
-    transition:
-      border-color 0.12s,
-      background 0.12s;
-  }
-  .picker-option:hover {
-    background: var(--bg-hover);
-  }
-  .picker-option.selected {
-    border-color: var(--accent);
-    background: rgba(0, 221, 255, 0.1);
-  }
-
-  .form-actions {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-  }
-
-  .status-msg {
-    font-size: 12px;
-    color: var(--success);
-  }
-  .status-msg.error {
-    color: var(--danger);
-  }
-</style>
+    {#if statusMsg}
+      <p
+        class="text-xs"
+        class:text-success={!statusIsError}
+        class:text-error={statusIsError}
+      >
+        {statusMsg}
+      </p>
+    {/if}
+  </div>
+</div>

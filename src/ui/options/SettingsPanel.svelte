@@ -33,41 +33,28 @@
   loadSettings();
 </script>
 
-<section class="card">
-  <h2>Settings</h2>
-  <div class="setting-row">
-    <label for="conflict-resolution">Conflict resolution</label>
-    <select
-      id="conflict-resolution"
-      bind:value={conflictResolution}
-      onchange={onConflictChange}
-    >
-      {#each conflictOptions as opt}
-        <option value={opt.value}>{opt.label}</option>
-      {/each}
-    </select>
+<div class="card bg-base-200">
+  <div class="card-body p-4 gap-3">
+    <h2 class="text-xs font-semibold uppercase tracking-wide opacity-60">
+      Settings
+    </h2>
+    <div class="flex justify-between items-center gap-4">
+      <label for="conflict-resolution" class="text-sm whitespace-nowrap"
+        >Conflict resolution</label
+      >
+      <select
+        id="conflict-resolution"
+        class="select select-sm select-bordered flex-1 max-w-72"
+        bind:value={conflictResolution}
+        onchange={onConflictChange}
+      >
+        {#each conflictOptions as opt}
+          <option value={opt.value}>{opt.label}</option>
+        {/each}
+      </select>
+    </div>
+    {#if error}
+      <p class="text-xs text-error">{error}</p>
+    {/if}
   </div>
-  {#if error}
-    <p class="error-msg">{error}</p>
-  {/if}
-</section>
-
-<style>
-  .setting-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-  }
-  .setting-row label {
-    white-space: nowrap;
-  }
-  .setting-row select {
-    flex: 1;
-    max-width: 280px;
-  }
-  .error-msg {
-    font-size: 12px;
-    color: var(--danger);
-  }
-</style>
+</div>

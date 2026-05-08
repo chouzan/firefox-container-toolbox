@@ -13,10 +13,10 @@
   }
 </script>
 
-<div class="options">
-  <header>
-    <h1>Container Toolbox</h1>
-    <p class="muted">Name-based container management</p>
+<div class="max-w-2xl mx-auto p-6 flex flex-col gap-5">
+  <header class="flex flex-col gap-1">
+    <h1 class="text-lg font-semibold">Container Toolbox</h1>
+    <p class="opacity-50 text-sm">Name-based container management</p>
   </header>
 
   <ContainerList bind:this={containerList} />
@@ -24,20 +24,3 @@
   <ImportExport {onImported} />
   <SettingsPanel />
 </div>
-
-<style>
-  .options {
-    max-width: 640px;
-    margin: 0 auto;
-    padding: 24px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  header {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-</style>

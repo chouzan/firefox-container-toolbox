@@ -1,5 +1,6 @@
 import * as esbuild from "esbuild";
 import sveltePlugin from "esbuild-svelte";
+import tailwindPlugin from "esbuild-plugin-tailwindcss";
 import { copyFileSync, mkdirSync, existsSync, cpSync } from "fs";
 import { dirname } from "path";
 
@@ -7,13 +8,11 @@ const isWatch = process.argv.includes("--watch");
 const srcDir = "src";
 const outDir = "dist";
 
-/** Copy static assets (manifest, HTML, CSS, icons, img) to dist/ */
 function copyStaticAssets() {
   const assets = [
     ["src/manifest.json", "dist/manifest.json"],
     ["src/ui/popup/popup.html", "dist/ui/popup/popup.html"],
     ["src/ui/options/options.html", "dist/ui/options/options.html"],
-    ["src/ui/shared/styles.css", "dist/ui/shared/styles.css"],
   ];
 
   for (const [src, dest] of assets) {
@@ -49,16 +48,20 @@ const buildOptions = {
     { in: `${srcDir}/background/Main.res.mjs`, out: "background" },
     { in: `${srcDir}/ui/popup/popup.ts`, out: "ui/popup/popup" },
     { in: `${srcDir}/ui/options/options.ts`, out: "ui/options/options" },
+    { in: `${srcDir}/ui/shared/styles.css`, out: "ui/shared/styles" },
   ],
   bundle: true,
   outdir: outDir,
   format: "iife",
   target: "firefox128",
   platform: "browser",
+  loader: { ".svg": "copy" },
+  assetNames: "[name]",
   sourcemap: isWatch ? "inline" : false,
   minify: !isWatch,
   conditions: ["svelte", "browser"],
   plugins: [
+    tailwindPlugin(),
     sveltePlugin({
       compilerOptions: {
         css: "injected",

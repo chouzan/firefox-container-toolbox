@@ -26,13 +26,16 @@
   "devDependencies": {
     "@rescript/core": "^1.6.1",
     "concurrently": "^9.2.1",
+    "daisyui": "^5.5.19",
     "esbuild": "^0.25.0",
+    "esbuild-plugin-tailwindcss": "^2.2.0",
     "esbuild-svelte": "^0.9.4",
     "prettier": "^3.8.3",
     "prettier-plugin-svelte": "^3.5.1",
     "rescript": "^12.2.0",
     "svelte": "^5.55.5",
     "svelte-check": "^4.4.8",
+    "tailwindcss": "^4.2.4",
     "typescript": "^5.7.0",
     "web-ext": "^8.4.0"
   }

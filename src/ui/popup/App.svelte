@@ -68,138 +68,79 @@
   loadData();
 </script>
 
-<div class="popup">
-  <header class="popup-header">
-    <h1>Container Toolbox</h1>
+<div class="w-80 p-3 flex flex-col gap-3">
+  <header>
+    <h1 class="text-base font-semibold">Container Toolbox</h1>
   </header>
 
-  <section class="section">
-    <div class="status-row">
-      <span class="label">Containers</span>
-      <span class="value">{status?.containerCount ?? "—"}</span>
+  <section class="flex flex-col text-sm">
+    <div class="flex justify-between py-0.5">
+      <span class="opacity-60">Containers</span>
+      <span class="font-mono text-xs">{status?.containerCount ?? "—"}</span>
     </div>
-    <div class="status-row">
-      <span class="label">Last reconcile</span>
-      <span class="value">{formatTime(status?.lastReconcileAt ?? null)}</span>
+    <div class="flex justify-between py-0.5">
+      <span class="opacity-60">Last reconcile</span>
+      <span class="font-mono text-xs"
+        >{formatTime(status?.lastReconcileAt ?? null)}</span
+      >
     </div>
-    <div class="status-row">
-      <span class="label">Sync</span>
-      <span class="value">{status?.syncEnabled ? "enabled" : "off"}</span>
+    <div class="flex justify-between py-0.5">
+      <span class="opacity-60">Sync</span>
+      <span class="font-mono text-xs"
+        >{status?.syncEnabled ? "enabled" : "off"}</span
+      >
     </div>
     {#if status && status.pendingConflicts > 0}
-      <div class="status-row conflict-warning">
-        <span class="label">Conflicts</span>
-        <span class="value">{status.pendingConflicts} pending</span>
+      <div class="flex justify-between py-0.5 text-error">
+        <span>Conflicts</span>
+        <span class="font-mono text-xs">{status.pendingConflicts} pending</span>
       </div>
     {/if}
   </section>
 
-  <section class="section">
-    <h2>Containers</h2>
+  <section class="flex flex-col">
+    <h2 class="text-xs font-semibold uppercase tracking-wide opacity-60 mb-2">
+      Containers
+    </h2>
     {#if containers.length === 0}
-      <p class="muted">No containers found.</p>
+      <p class="opacity-50 text-sm">No containers found.</p>
     {:else}
-      <ul class="container-list">
+      <ul class="max-h-60 overflow-y-auto flex flex-col">
         {#each containers as c (c.cookieStoreId)}
-          <li class="container-item">
+          <li
+            class="flex items-center gap-2 px-2 py-1 rounded hover:bg-base-300"
+          >
             <div
               class="usercontext-icon"
               data-identity-icon={c.icon}
               data-identity-color={c.color}
             ></div>
-            <span class="container-name">{c.name}</span>
-            <span class="container-id">{shortId(c.cookieStoreId)}</span>
+            <span class="flex-1 truncate text-sm">{c.name}</span>
+            <span class="font-mono text-[10px] opacity-50"
+              >{shortId(c.cookieStoreId)}</span
+            >
           </li>
         {/each}
       </ul>
     {/if}
   </section>
 
-  <section class="section actions">
-    <button class="btn btn-primary" disabled={reconciling} onclick={reconcile}>
+  <section class="flex gap-2">
+    <button
+      class="btn btn-primary btn-sm flex-1"
+      disabled={reconciling}
+      onclick={reconcile}
+    >
       {reconcileLabel}
     </button>
-    <button class="btn btn-secondary" onclick={openOptions}> Options </button>
+    <button class="btn btn-soft btn-sm flex-1" onclick={openOptions}>
+      Options
+    </button>
   </section>
 
   {#if error}
-    <div class="error-banner">{error}</div>
+    <div role="alert" class="alert alert-error text-sm p-2">
+      {error}
+    </div>
   {/if}
 </div>
-
-<style>
-  .popup {
-    width: 320px;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .popup-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .section {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .status-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 3px 0;
-  }
-  .status-row .label {
-    color: var(--text-muted);
-  }
-  .conflict-warning .label,
-  .conflict-warning .value {
-    color: var(--danger);
-  }
-  .status-row .value {
-    font-family: var(--font-mono);
-    font-size: 12px;
-  }
-
-  .container-list {
-    list-style: none;
-    max-height: 240px;
-    overflow-y: auto;
-  }
-
-  .container-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 5px 8px;
-    border-radius: var(--radius);
-  }
-  .container-item:hover {
-    background: var(--bg-surface);
-  }
-
-  .container-name {
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .container-id {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--text-muted);
-    white-space: nowrap;
-  }
-
-  .actions {
-    flex-direction: row;
-    gap: 8px;
-  }
-  .actions :global(.btn) {
-    flex: 1;
-  }
-</style>
