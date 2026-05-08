@@ -1,9 +1,11 @@
 <script lang="ts">
-  import type {
-    containerToolboxConfig,
-    reconcileResult,
-  } from "../../lib/Types.gen";
-  import { sendMessage } from "../shared/messaging.js";
+  import type { containerToolboxConfig } from "../../lib/Types.gen";
+  import {
+    Action,
+    sendMessage,
+    formatReconcileResult,
+    type ReconcileResultData,
+  } from "../shared/messaging.js";
 
   interface Props {
     onImported?: () => void;
@@ -24,7 +26,9 @@
 
   async function exportConfig() {
     try {
-      const config = await sendMessage<containerToolboxConfig>("EXPORT_CONFIG");
+      const config = await sendMessage<containerToolboxConfig>(
+        Action.exportConfig,
+      );
       const blob = new Blob([JSON.stringify(config, null, 2)], {
         type: "application/json",
       });
@@ -48,18 +52,11 @@
     try {
       const text = await file.text();
       const data = JSON.parse(text);
-      const result = await sendMessage<reconcileResult>("IMPORT_CONFIG", data);
-
-      const parts: string[] = [];
-      if (result.created.length) parts.push(`${result.created.length} created`);
-      if (result.updated.length) parts.push(`${result.updated.length} updated`);
-      if (result.removed.length) parts.push(`${result.removed.length} removed`);
-      flash(
-        parts.length
-          ? `Imported: ${parts.join(", ")}`
-          : "Imported (no changes)",
+      const result = await sendMessage<ReconcileResultData>(
+        Action.importConfig,
+        data,
       );
-
+      flash(`Imported: ${formatReconcileResult(result)}`);
       onImported?.();
     } catch (err) {
       flash(err instanceof Error ? err.message : "Import failed", true);
@@ -71,12 +68,10 @@
   async function reconcile() {
     reconciling = true;
     try {
-      const result = await sendMessage<reconcileResult>("RECONCILE_NOW");
-      const parts: string[] = [];
-      if (result.created.length) parts.push(`${result.created.length} created`);
-      if (result.updated.length) parts.push(`${result.updated.length} updated`);
-      if (result.removed.length) parts.push(`${result.removed.length} removed`);
-      flash(parts.length ? parts.join(", ") : "No changes needed");
+      const result = await sendMessage<ReconcileResultData>(
+        Action.reconcileNow,
+      );
+      flash(formatReconcileResult(result));
       onImported?.();
     } catch (err) {
       flash(err instanceof Error ? err.message : "Reconcile failed", true);

@@ -117,14 +117,12 @@ let reconcile = async (desired: array<Types.containerConfig>): Types.reconcileRe
         id: Browser.Crypto.randomUUID(),
         type_: "extra-container",
         description: `Container "${name}" exists locally but not in config`,
-        localValue: JSON.Object(
-          dict{
-            "name": JSON.String(container.name),
-            "color": JSON.String((container.color :> string)),
-            "icon": JSON.String((container.icon :> string)),
-          },
-        ),
-        remoteValue: JSON.Null,
+        localValue: Nullable.make({
+          Types.name: container.name,
+          color: (container.color :> string),
+          icon: (container.icon :> string),
+        }),
+        remoteValue: Nullable.null,
       }
       let _ = await StorageManager.updateSyncState({
         ...syncState,

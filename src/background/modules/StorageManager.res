@@ -36,25 +36,7 @@ let defaultSyncState: syncState = {
   pendingConflicts: [],
 }
 
-// Storage trust boundary — we wrote the data, so we know the shape.
-// Obj.magic is used here to cast untyped JSON from browser.storage.local
-// to the expected ReScript types. This is the ONLY place it's needed.
-let getSection = async (key: string, default: 'a): 'a => {
-  let result = await Browser.Storage.getAll()
-  let dict: Dict.t<JSON.t> = Obj.magic(result)
-  switch dict->Dict.get(key) {
-  | Some(v) if v !== JSON.Null => Obj.magic(v)
-  | _ => default
-  }
-}
-
-let setSection = async (key: string, value: 'a): unit => {
-  let obj: Dict.t<JSON.t> = Dict.make()
-  obj->Dict.set(key, Obj.magic(value))
-  await Browser.Storage.set(Obj.magic(obj))
-}
-
-// Object.assign({}, base, partial) — shallow merge
+// Object.assign({}, base, partial) — shallow merge, untypable empty literal
 let merge: ('a, 'a) => 'a = %raw(`
   function(a, b) { return Object.assign({}, a, b); }
 `)
@@ -64,77 +46,86 @@ let mergePartial: ('a, JSON.t) => 'a = %raw(`
 `)
 
 let getSettings = async (): settings => {
-  await getSection("settings", defaultSettings)
+  let result = await Browser.Storage.get({"settings": Nullable.null})
+  let r: {"settings": Nullable.t<settings>} = result
+  r["settings"]->Nullable.toOption->Option.getOr(defaultSettings)
 }
 
 let updateSettings = async (partial: settings): settings => {
   let current = await getSettings()
   let merged = merge(current, partial)
-  await setSection("settings", merged)
+  await Browser.Storage.set({"settings": merged})
   merged
 }
 
 let updatePartialSettings = async (partial: JSON.t): settings => {
   let current = await getSettings()
   let merged = mergePartial(current, partial)
-  await setSection("settings", merged)
+  await Browser.Storage.set({"settings": merged})
   merged
 }
 
 let getDriveAuth = async (): driveAuth => {
-  let section: option<authSection> = await getSection("auth", None)
-  switch section {
-  | Some(auth) => auth.drive
+  let result = await Browser.Storage.get({"auth": Nullable.null})
+  let r: {"auth": Nullable.t<{"drive": driveAuth}>} = result
+  switch r["auth"]->Nullable.toOption {
+  | Some(a) => a["drive"]
   | None => defaultDriveAuth
   }
 }
 
 let setDriveAuth = async (auth: driveAuth): unit => {
-  await setSection("auth", {drive: auth})
+  await Browser.Storage.set({"auth": {"drive": auth}})
 }
 
 let getNameCache = async (): nameCache => {
-  await getSection("nameCache", defaultNameCache)
+  let result = await Browser.Storage.get({"nameCache": Nullable.null})
+  let r: {"nameCache": Nullable.t<nameCache>} = result
+  r["nameCache"]->Nullable.toOption->Option.getOr(defaultNameCache)
 }
 
 let setNameCache = async (cache: nameCache): unit => {
-  await setSection("nameCache", cache)
+  await Browser.Storage.set({"nameCache": cache})
 }
 
 let getSyncState = async (): syncState => {
-  await getSection("syncState", defaultSyncState)
+  let result = await Browser.Storage.get({"syncState": Nullable.null})
+  let r: {"syncState": Nullable.t<syncState>} = result
+  r["syncState"]->Nullable.toOption->Option.getOr(defaultSyncState)
 }
 
 let updateSyncState = async (partial: syncState): syncState => {
   let current = await getSyncState()
   let merged = merge(current, partial)
-  await setSection("syncState", merged)
+  await Browser.Storage.set({"syncState": merged})
   merged
 }
 
 let getLastConfig = async (): Nullable.t<containerToolboxConfig> => {
-  let result: option<containerToolboxConfig> = await getSection("lastConfig", None)
-  switch result {
-  | Some(config) => Nullable.make(config)
-  | None => Nullable.null
-  }
+  let result = await Browser.Storage.get({"lastConfig": Nullable.null})
+  let r: {"lastConfig": Nullable.t<containerToolboxConfig>} = result
+  r["lastConfig"]
 }
 
 let setLastConfig = async (config: Nullable.t<containerToolboxConfig>): unit => {
-  await setSection("lastConfig", config)
+  await Browser.Storage.set({"lastConfig": config})
 }
 
 let migrate = async (): unit => {
-  let version: int = await getSection("_schemaVersion", 0)
+  let result = await Browser.Storage.get({"_schemaVersion": Nullable.null})
+  let r: {"_schemaVersion": Nullable.t<int>} = result
+  let version = r["_schemaVersion"]->Nullable.toOption->Option.getOr(0)
 
   if version == 0 {
-    await setSection("_schemaVersion", Constants.currentSchemaVersion)
-    await setSection("settings", defaultSettings)
-    await setSection("auth", {drive: defaultDriveAuth})
-    await setSection("nameCache", defaultNameCache)
-    await setSection("syncState", defaultSyncState)
-    await setSection("lastConfig", Nullable.null)
+    await Browser.Storage.set({
+      "_schemaVersion": Constants.currentSchemaVersion,
+      "settings": defaultSettings,
+      "auth": {"drive": defaultDriveAuth},
+      "nameCache": defaultNameCache,
+      "syncState": defaultSyncState,
+      "lastConfig": Nullable.null,
+    })
   } else if version < Constants.currentSchemaVersion {
-    await setSection("_schemaVersion", Constants.currentSchemaVersion)
+    await Browser.Storage.set({"_schemaVersion": Constants.currentSchemaVersion})
   }
 }

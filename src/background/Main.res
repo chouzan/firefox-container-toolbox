@@ -22,7 +22,7 @@ type updatePayload = {cookieStoreId: string, updates: Browser.ContextualIdentiti
 type deletePayload = {cookieStoreId: string}
 type movePayload = {cookieStoreId: string, position: int}
 
-MessageRouter.handleUnit("GET_STATUS", async () => {
+MessageRouter.handleUnit(Constants.action["getStatus"], async () => {
   let containers = await ContainerManager.listContainers()
   let syncState = await StorageManager.getSyncState()
   let settings = await StorageManager.getSettings()
@@ -36,7 +36,7 @@ MessageRouter.handleUnit("GET_STATUS", async () => {
   }
 })
 
-MessageRouter.handleUnit("GET_CONTAINERS", async () => {
+MessageRouter.handleUnit(Constants.action["getContainers"], async () => {
   let containers = await ContainerManager.listContainers()
   let idToName = NameResolver.getIdToName()
   containers->Array.map(c => {
@@ -50,33 +50,33 @@ MessageRouter.handleUnit("GET_CONTAINERS", async () => {
   })
 })
 
-MessageRouter.handleUnit("GET_SETTINGS", async () => {
+MessageRouter.handleUnit(Constants.action["getSettings"], async () => {
   await StorageManager.getSettings()
 })
 
-MessageRouter.handle("UPDATE_SETTINGS", async (payload: JSON.t) => {
+MessageRouter.handle(Constants.action["updateSettings"], async (payload: JSON.t) => {
   await StorageManager.updatePartialSettings(payload)
 })
 
-MessageRouter.handle("CREATE_CONTAINER", async (p: createPayload) => {
+MessageRouter.handle(Constants.action["createContainer"], async (p: createPayload) => {
   await ContainerManager.createContainer(~name=p.name, ~color=p.color, ~icon=p.icon)
 })
 
-MessageRouter.handle("UPDATE_CONTAINER", async (p: updatePayload) => {
+MessageRouter.handle(Constants.action["updateContainer"], async (p: updatePayload) => {
   await ContainerManager.updateContainer(p.cookieStoreId, p.updates)
 })
 
-MessageRouter.handle("DELETE_CONTAINER", async (p: deletePayload) => {
+MessageRouter.handle(Constants.action["deleteContainer"], async (p: deletePayload) => {
   await ContainerManager.removeContainer(p.cookieStoreId)
   {ok: true}
 })
 
-MessageRouter.handle("MOVE_CONTAINER", async (p: movePayload) => {
+MessageRouter.handle(Constants.action["moveContainer"], async (p: movePayload) => {
   await Browser.ContextualIdentities.move(p.cookieStoreId, p.position)
   {ok: true}
 })
 
-MessageRouter.handleUnit("RECONCILE_NOW", async () => {
+MessageRouter.handleUnit(Constants.action["reconcileNow"], async () => {
   let lastConfig = await StorageManager.getLastConfig()
   switch lastConfig->Nullable.toOption {
   | None => throw(Errors.make(ConfigInvalid, "No config loaded — import or pull a config first"))
@@ -84,7 +84,7 @@ MessageRouter.handleUnit("RECONCILE_NOW", async () => {
   }
 })
 
-MessageRouter.handleUnit("EXPORT_CONFIG", async () => {
+MessageRouter.handleUnit(Constants.action["exportConfig"], async () => {
   let containers = await ContainerManager.listContainers()
   let config: Types.containerToolboxConfig = {
     version: 1,
@@ -111,7 +111,7 @@ MessageRouter.handleUnit("EXPORT_CONFIG", async () => {
   config
 })
 
-MessageRouter.handle("IMPORT_CONFIG", async (payload: JSON.t) => {
+MessageRouter.handle(Constants.action["importConfig"], async (payload: JSON.t) => {
   if !Validators.validateConfig(payload) {
     throw(Errors.make(ConfigInvalid, "Invalid config format"))
   }

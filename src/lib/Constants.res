@@ -1,8 +1,13 @@
-@genType let extensionId = "container-toolbox@chouzan"
-@genType let extensionVersion = "0.1.0"
-@genType let stgExtensionId = "simple-tab-groups@drive4ik"
+@genType
+let extensionId = "container-toolbox@chouzan"
 
-// Firefox built-in container color set
+@genType
+let extensionVersion = "0.1.0"
+
+@genType
+let stgExtensionId = "simple-tab-groups@drive4ik"
+
+// Firefox built-in container colour set
 @genType
 type containerColor =
   | @as("blue") Blue
@@ -35,14 +40,14 @@ type containerIcon =
   | @as("briefcase") Briefcase
   | @as("dollar") Dollar
   | @as("cart") Cart
-  | @as("circle") Circle
-  | @as("gift") Gift
   | @as("vacation") Vacation
+  | @as("gift") Gift
   | @as("food") Food
   | @as("fruit") Fruit
   | @as("pet") Pet
   | @as("tree") Tree
   | @as("chill") Chill
+  | @as("circle") Circle
   | @as("fence") Fence
 
 @genType
@@ -51,14 +56,14 @@ let containerIcons: array<containerIcon> = [
   Briefcase,
   Dollar,
   Cart,
-  Circle,
-  Gift,
   Vacation,
+  Gift,
   Food,
   Fruit,
   Pet,
   Tree,
   Chill,
+  Circle,
   Fence,
 ]
 
@@ -77,7 +82,46 @@ let specialContainersReverse = dict{
   "temporary-container": "$temporary",
 }
 
-@genType let currentSchemaVersion = 1
-@genType let messagePrefix = "container-toolbox:"
-@genType let defaultDriveFilename = "container-toolbox-config.json"
-@genType let configVersion = 1
+@genType
+let defaultColor: containerColor = Blue
+
+@genType
+let defaultIcon: containerIcon = Fingerprint
+
+@genType
+type conflictResolution =
+  | @as("config-wins") ConfigWins
+  | @as("local-wins") LocalWins
+  | @as("ask") Ask
+
+@genType
+let defaultConflictResolution: conflictResolution = LocalWins
+
+@genType
+let currentSchemaVersion = 1
+
+@genType
+let messagePrefix = "container-toolbox:"
+
+@genType
+let defaultDriveFilename = "container-toolbox-config.json"
+
+@genType
+let configVersion = 1
+
+@genType
+let action = {
+  "getStatus": "GET_STATUS",
+  "getContainers": "GET_CONTAINERS",
+  "getSettings": "GET_SETTINGS",
+  "updateSettings": "UPDATE_SETTINGS",
+  "createContainer": "CREATE_CONTAINER",
+  "updateContainer": "UPDATE_CONTAINER",
+  "deleteContainer": "DELETE_CONTAINER",
+  "moveContainer": "MOVE_CONTAINER",
+  "reconcileNow": "RECONCILE_NOW",
+  "exportConfig": "EXPORT_CONFIG",
+  "importConfig": "IMPORT_CONFIG",
+  "getConflicts": "GET_CONFLICTS",
+  "resolveConflict": "RESOLVE_CONFLICT",
+}

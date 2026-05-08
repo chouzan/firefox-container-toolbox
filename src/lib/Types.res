@@ -74,15 +74,9 @@ type stgStrategy =
   | @as("messaging") Messaging
 
 @genType
-type conflictResolution =
-  | @as("config-wins") ConfigWins
-  | @as("local-wins") LocalWins
-  | @as("ask") Ask
-
-@genType
 type settings = {
   stgStrategy: stgStrategy,
-  conflictResolution: conflictResolution,
+  conflictResolution: Constants.conflictResolution,
   syncEnabled: bool,
   driveFileId: Nullable.t<string>,
   driveFolderId: Nullable.t<string>,
@@ -107,12 +101,19 @@ type nameCache = {
 }
 
 @genType
+type conflictValue = {
+  name: string,
+  color: string,
+  icon: string,
+}
+
+@genType
 type syncConflict = {
   id: string,
   @as("type") type_: string,
   description: string,
-  localValue: JSON.t,
-  remoteValue: JSON.t,
+  localValue: Nullable.t<conflictValue>,
+  remoteValue: Nullable.t<conflictValue>,
 }
 
 @genType

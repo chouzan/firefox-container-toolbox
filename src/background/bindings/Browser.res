@@ -1,14 +1,14 @@
 // Firefox WebExtension API bindings for ReScript
 
 module ContextualIdentities = {
-  type contextualIdentity = {
+  type contextualIdentity = private {
     cookieStoreId: string,
     name: string,
     color: Constants.containerColor,
     icon: Constants.containerIcon,
   }
 
-  type changeInfo = {contextualIdentity: contextualIdentity}
+  type changeInfo = private {contextualIdentity: contextualIdentity}
   type updateDetails = {name?: string, color?: string, icon?: string}
 
   @scope(("browser", "contextualIdentities")) @val
@@ -43,16 +43,15 @@ module ContextualIdentities = {
 }
 
 module Storage = {
-  // get(null) returns all keys
   @scope(("browser", "storage", "local")) @val
-  external getAll: (@as(json`null`) _, unit) => promise<JSON.t> = "get"
+  external get: {..} => promise<{..}> = "get"
 
   @scope(("browser", "storage", "local")) @val
-  external set: JSON.t => promise<unit> = "set"
+  external set: {..} => promise<unit> = "set"
 }
 
 module Runtime = {
-  type messageSender = {
+  type messageSender = private {
     id?: string,
     url?: string,
   }
@@ -74,7 +73,7 @@ module Runtime = {
   }
 
   module OnInstalled = {
-    type details = {reason: string, previousVersion?: string}
+    type details = private {reason: string, previousVersion?: string}
 
     @scope(("browser", "runtime", "onInstalled")) @val
     external addListener: (details => unit) => unit = "addListener"

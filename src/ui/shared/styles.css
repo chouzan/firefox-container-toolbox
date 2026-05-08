@@ -150,7 +150,7 @@ select:focus {
   border-color: var(--accent);
 }
 
-/* Container identity icons: SVG sprite + feComposite filter for dynamic coloring */
+/* Container identity icons: SVG sprite + feComposite filter for dynamic colouring */
 
 /* Color mappings: data-identity-color -> CSS custom property */
 [data-identity-color="blue"] {
@@ -222,7 +222,7 @@ select:focus {
   --identity-icon: url("../../img/usercontext.svg#fence");
 }
 
-/* Renders a colored container icon via SVG filter compositing */
+/* Renders a coloured container icon via SVG filter compositing */
 .usercontext-icon {
   display: inline-block;
   width: 16px;

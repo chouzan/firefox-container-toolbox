@@ -1,33 +1,29 @@
 <script lang="ts">
-  import { containerColors, containerIcons } from "../../lib/Constants.gen";
-  import { sendMessage } from "../shared/messaging.js";
-
-  interface ContainerData {
-    cookieStoreId: string;
-    name: string;
-    color: string;
-    icon: string;
-    resolvedName: string;
-  }
+  import {
+    containerColors,
+    containerIcons,
+    defaultColor,
+    defaultIcon,
+  } from "../../lib/Constants.gen";
+  import {
+    Action,
+    sendMessage,
+    shortId,
+    type ContainerData,
+  } from "../shared/messaging.js";
 
   let containers = $state<ContainerData[]>([]);
   let showForm = $state(false);
   let editingId = $state<string | null>(null);
   let formName = $state("");
-  let selectedColor = $state("blue");
-  let selectedIcon = $state("fingerprint");
+  let selectedColor = $state(defaultColor);
+  let selectedIcon = $state(defaultIcon);
   let statusMsg = $state("");
   let statusIsError = $state(false);
 
-  // Drag state
   let draggedIdx = $state<number | null>(null);
   let dragOverIdx = $state<number | null>(null);
   let moving = $state(false);
-
-  function shortId(id: string): string {
-    const match = id.match(/firefox-container-(\d+)/);
-    return match ? `ct-${match[1]}` : id;
-  }
 
   function flash(msg: string, isError = false) {
     statusMsg = msg;
@@ -37,7 +33,7 @@
 
   export const load = async () => {
     try {
-      containers = await sendMessage<ContainerData[]>("GET_CONTAINERS");
+      containers = await sendMessage<ContainerData[]>(Action.getContainers);
     } catch (err) {
       flash(
         err instanceof Error ? err.message : "Failed to load containers",
@@ -49,8 +45,8 @@
   function openAdd() {
     editingId = null;
     formName = "";
-    selectedColor = "blue";
-    selectedIcon = "fingerprint";
+    selectedColor = defaultColor;
+    selectedIcon = defaultIcon;
     showForm = true;
   }
 
@@ -76,12 +72,12 @@
 
     try {
       if (editingId) {
-        await sendMessage("UPDATE_CONTAINER", {
+        await sendMessage(Action.updateContainer, {
           cookieStoreId: editingId,
           updates: { name, color: selectedColor, icon: selectedIcon },
         });
       } else {
-        await sendMessage("CREATE_CONTAINER", {
+        await sendMessage(Action.createContainer, {
           name,
           color: selectedColor,
           icon: selectedIcon,
@@ -102,7 +98,9 @@
     )
       return;
     try {
-      await sendMessage("DELETE_CONTAINER", { cookieStoreId: c.cookieStoreId });
+      await sendMessage(Action.deleteContainer, {
+        cookieStoreId: c.cookieStoreId,
+      });
       await load();
     } catch (err) {
       flash(err instanceof Error ? err.message : "Delete failed", true);
@@ -142,7 +140,7 @@
 
     try {
       moving = true;
-      await sendMessage("MOVE_CONTAINER", {
+      await sendMessage(Action.moveContainer, {
         cookieStoreId: item.cookieStoreId,
         position: toIdx,
       });
@@ -229,7 +227,7 @@
         />
       </div>
       <div class="form-row">
-        <span class="form-label">Color</span>
+        <span class="form-label">Colour</span>
         <div class="picker-grid">
           {#each containerColors as color}
             <button

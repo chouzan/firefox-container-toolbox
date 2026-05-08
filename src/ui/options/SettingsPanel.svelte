@@ -1,24 +1,30 @@
 <script lang="ts">
   import type { settings } from "../../lib/Types.gen";
-  import { sendMessage } from "../shared/messaging.js";
+  import { defaultConflictResolution } from "../../lib/Constants.gen";
+  import type { conflictResolution as ConflictResolution } from "../../lib/Constants.gen";
+  import { Action, sendMessage } from "../shared/messaging.js";
 
-  let conflictResolution = $state("local-wins");
+  const conflictOptions: { value: ConflictResolution; label: string }[] = [
+    { value: "local-wins", label: "Local wins (keep extra containers)" },
+    { value: "config-wins", label: "Config wins (remove extras)" },
+    { value: "ask", label: "Ask each time" },
+  ];
+
+  let conflictResolution = $state(defaultConflictResolution);
   let error = $state("");
 
   async function loadSettings() {
     try {
-      const s = await sendMessage<settings>("GET_SETTINGS");
+      const s = await sendMessage<settings>(Action.getSettings);
       conflictResolution = s.conflictResolution;
     } catch (err) {
       error = err instanceof Error ? err.message : "Failed to load settings";
     }
   }
 
-  async function onConflictChange(e: Event) {
-    const value = (e.target as HTMLSelectElement).value;
-    conflictResolution = value;
+  async function onConflictChange() {
     try {
-      await sendMessage("UPDATE_SETTINGS", { conflictResolution: value });
+      await sendMessage(Action.updateSettings, { conflictResolution });
     } catch (err) {
       error = err instanceof Error ? err.message : "Failed to save";
     }
@@ -36,9 +42,9 @@
       bind:value={conflictResolution}
       onchange={onConflictChange}
     >
-      <option value="local-wins">Local wins (keep extra containers)</option>
-      <option value="config-wins">Config wins (remove extras)</option>
-      <option value="ask">Ask each time</option>
+      {#each conflictOptions as opt}
+        <option value={opt.value}>{opt.label}</option>
+      {/each}
     </select>
   </div>
   {#if error}

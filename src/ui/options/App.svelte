@@ -1,12 +1,15 @@
 <script lang="ts">
   import ContainerList from "./ContainerList.svelte";
+  import ConflictList from "./ConflictList.svelte";
   import ImportExport from "./ImportExport.svelte";
   import SettingsPanel from "./SettingsPanel.svelte";
 
   let containerList: ReturnType<typeof ContainerList>;
+  let conflictList: ReturnType<typeof ConflictList>;
 
   function onImported() {
     containerList?.load();
+    conflictList?.load();
   }
 </script>
 
@@ -17,6 +20,7 @@
   </header>
 
   <ContainerList bind:this={containerList} />
+  <ConflictList bind:this={conflictList} />
   <ImportExport {onImported} />
   <SettingsPanel />
 </div>

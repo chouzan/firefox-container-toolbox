@@ -1,5 +1,12 @@
 <script lang="ts">
-  import { sendMessage } from "../shared/messaging.js";
+  import {
+    Action,
+    sendMessage,
+    shortId,
+    formatReconcileResult,
+    type ContainerData,
+    type ReconcileResultData,
+  } from "../shared/messaging.js";
 
   interface StatusData {
     containerCount: number;
@@ -8,14 +15,6 @@
     lastPushAt: string | null;
     lastPullAt: string | null;
     pendingConflicts: number;
-  }
-
-  interface ContainerData {
-    cookieStoreId: string;
-    name: string;
-    color: string;
-    icon: string;
-    resolvedName: string;
   }
 
   let status = $state<StatusData | null>(null);
@@ -34,15 +33,10 @@
     return d.toLocaleDateString();
   }
 
-  function shortId(id: string): string {
-    const match = id.match(/firefox-container-(\d+)/);
-    return match ? `ct-${match[1]}` : id;
-  }
-
   async function loadData() {
     try {
-      status = await sendMessage<StatusData>("GET_STATUS");
-      containers = await sendMessage<ContainerData[]>("GET_CONTAINERS");
+      status = await sendMessage<StatusData>(Action.getStatus);
+      containers = await sendMessage<ContainerData[]>(Action.getContainers);
     } catch (err) {
       error = err instanceof Error ? err.message : "Failed to load";
     }
@@ -52,23 +46,17 @@
     reconciling = true;
     reconcileLabel = "Reconciling...";
     try {
-      const result = await sendMessage<{
-        created: string[];
-        updated: string[];
-        removed: string[];
-      }>("RECONCILE_NOW");
-      const parts: string[] = [];
-      if (result.created.length) parts.push(`+${result.created.length}`);
-      if (result.updated.length) parts.push(`~${result.updated.length}`);
-      if (result.removed.length) parts.push(`-${result.removed.length}`);
-      reconcileLabel = parts.length ? parts.join(" ") : "No changes";
+      const result = await sendMessage<ReconcileResultData>(
+        Action.reconcileNow,
+      );
+      reconcileLabel = formatReconcileResult(result);
       await loadData();
     } catch (err) {
       error = err instanceof Error ? err.message : "Reconcile failed";
       reconcileLabel = "Reconcile";
     } finally {
       reconciling = false;
-      setTimeout(() => (reconcileLabel = "Reconcile"), 2000);
+      setTimeout(() => (reconcileLabel = "Reconcile"), 3000);
     }
   }
 
@@ -98,6 +86,12 @@
       <span class="label">Sync</span>
       <span class="value">{status?.syncEnabled ? "enabled" : "off"}</span>
     </div>
+    {#if status && status.pendingConflicts > 0}
+      <div class="status-row conflict-warning">
+        <span class="label">Conflicts</span>
+        <span class="value">{status.pendingConflicts} pending</span>
+      </div>
+    {/if}
   </section>
 
   <section class="section">
@@ -105,7 +99,7 @@
     {#if containers.length === 0}
       <p class="muted">No containers found.</p>
     {:else}
-      <ul id="containers">
+      <ul class="container-list">
         {#each containers as c (c.cookieStoreId)}
           <li class="container-item">
             <div
@@ -161,12 +155,16 @@
   .status-row .label {
     color: var(--text-muted);
   }
+  .conflict-warning .label,
+  .conflict-warning .value {
+    color: var(--danger);
+  }
   .status-row .value {
     font-family: var(--font-mono);
     font-size: 12px;
   }
 
-  #containers {
+  .container-list {
     list-style: none;
     max-height: 240px;
     overflow-y: auto;

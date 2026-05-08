@@ -1,5 +1,5 @@
 {
-  "name": "container-toolbox",
+  "name": "firefox-container-toolbox",
   "sources": [
     { "dir": "src/lib", "subdirs": true },
     { "dir": "src/background", "subdirs": true }
