@@ -2,6 +2,7 @@
   import ContainerList from "./ContainerList.svelte";
   import ConflictList from "./ConflictList.svelte";
   import ImportExport from "./ImportExport.svelte";
+  import DrivePanel from "./DrivePanel.svelte";
   import SettingsPanel from "./SettingsPanel.svelte";
 
   let containerList: ReturnType<typeof ContainerList>;
@@ -22,5 +23,6 @@
   <ContainerList bind:this={containerList} />
   <ConflictList bind:this={conflictList} />
   <ImportExport {onImported} />
+  <DrivePanel onSynced={onImported} />
   <SettingsPanel />
 </div>

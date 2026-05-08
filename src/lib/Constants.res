@@ -124,4 +124,12 @@ let action = {
   "importConfig": "IMPORT_CONFIG",
   "getConflicts": "GET_CONFLICTS",
   "resolveConflict": "RESOLVE_CONFLICT",
+  "driveAuthenticate": "DRIVE_AUTHENTICATE",
+  "driveRevoke": "DRIVE_REVOKE",
+  "driveStatus": "DRIVE_STATUS",
+  "driveSetCredentials": "DRIVE_SET_CREDENTIALS",
+  "syncPull": "SYNC_PULL",
+  "syncPush": "SYNC_PUSH",
+  "forcePushLocal": "FORCE_PUSH_LOCAL",
+  "clearRemote": "CLEAR_REMOTE",
 }

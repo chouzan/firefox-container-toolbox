@@ -93,7 +93,7 @@
   async function deleteContainer(c: ContainerData) {
     if (
       !confirm(
-        `Remove container "${c.name}"? Tabs in this container will be closed.`,
+        `Remove container "${c.name}"? Existing tabs will lose their container association.`,
       )
     )
       return;

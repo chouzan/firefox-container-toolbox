@@ -121,6 +121,59 @@ MessageRouter.handle(Constants.action["importConfig"], async (payload: JSON.t) =
   await ContainerManager.reconcile(config.containers)
 })
 
+type credentialsPayload = {clientId: string, clientSecret: string}
+
+MessageRouter.handleUnit(Constants.action["driveAuthenticate"], async () => {
+  await DriveClient.authenticate()
+  {ok: true}
+})
+
+MessageRouter.handleUnit(Constants.action["driveRevoke"], async () => {
+  await DriveClient.revokeAuth()
+  {ok: true}
+})
+
+MessageRouter.handleUnit(Constants.action["driveStatus"], async () => {
+  let auth = await StorageManager.getDriveAuth()
+  let syncState = await StorageManager.getSyncState()
+  let settings = await StorageManager.getSettings()
+  {
+    "authenticated": auth.accessToken->Nullable.toOption->Option.isSome,
+    "hasCredentials": auth.clientId->Nullable.toOption->Option.isSome,
+    "syncEnabled": settings.syncEnabled,
+    "lastPushAt": syncState.lastPushAt,
+    "lastPullAt": syncState.lastPullAt,
+    "driveFileId": settings.driveFileId,
+  }
+})
+
+MessageRouter.handle(Constants.action["driveSetCredentials"], async (p: credentialsPayload) => {
+  let auth = await StorageManager.getDriveAuth()
+  await StorageManager.setDriveAuth({
+    ...auth,
+    clientId: Nullable.make(p.clientId),
+    clientSecret: Nullable.make(p.clientSecret),
+  })
+  {ok: true}
+})
+
+MessageRouter.handleUnit(Constants.action["syncPull"], async () => {
+  await SyncEngine.pullAndApply()
+})
+
+MessageRouter.handleUnit(Constants.action["syncPush"], async () => {
+  await SyncEngine.exportAndPush()
+})
+
+MessageRouter.handleUnit(Constants.action["forcePushLocal"], async () => {
+  await SyncEngine.forcePushLocal()
+})
+
+MessageRouter.handleUnit(Constants.action["clearRemote"], async () => {
+  await SyncEngine.clearRemote()
+  {ok: true}
+})
+
 MessageRouter.setupMessageListener()
 
 Browser.Runtime.OnInstalled.addListener(details => {

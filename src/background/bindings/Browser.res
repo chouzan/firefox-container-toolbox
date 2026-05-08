@@ -80,6 +80,14 @@ module Runtime = {
   }
 }
 
+module Identity = {
+  @scope(("browser", "identity")) @val
+  external launchWebAuthFlow: {..} => promise<string> = "launchWebAuthFlow"
+
+  @scope(("browser", "identity")) @val
+  external getRedirectURL: unit => string = "getRedirectURL"
+}
+
 module Downloads = {
   @scope(("browser", "downloads")) @val
   external download: {..} => promise<int> = "download"
@@ -90,7 +98,36 @@ module Notifications = {
   external create: (string, {..}) => promise<string> = "create"
 }
 
+module URL = {
+  type t
+  type searchParams
+
+  @new external make: string => t = "URL"
+  @get external searchParams: t => searchParams = "searchParams"
+}
+
+module URLSearchParams = {
+  @send external get: (URL.searchParams, string) => Nullable.t<string> = "get"
+}
+
 module Crypto = {
   @scope("crypto") @val
   external randomUUID: unit => string = "randomUUID"
+}
+
+@val external encodeURIComponent: string => string = "encodeURIComponent"
+
+module Fetch = {
+  type response = private {
+    ok: bool,
+    status: int,
+    statusText: string,
+  }
+
+  @send external json: response => promise<JSON.t> = "json"
+  @send external jsonAs: response => promise<'a> = "json"
+  @send external text: response => promise<string> = "text"
+
+  @val external fetch: (string, {..}) => promise<response> = "fetch"
+  @val external fetchUrl: string => promise<response> = "fetch"
 }
