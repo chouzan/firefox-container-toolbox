@@ -24,6 +24,8 @@ let pullAndApply = async (): Types.reconcileResult => {
 
 let exportAndPush = async () => {
   let containers = await ContainerManager.listContainers()
+  let lastConfig = await StorageManager.getLastConfig()
+  let prev = lastConfig->Nullable.toOption
   let config: Types.containerToolboxConfig = {
     version: 1,
     meta: {
@@ -38,12 +40,14 @@ let exportAndPush = async () => {
         order: i,
       }
     }),
-    stgGroups: [],
-    stgHotkeys: [],
-    stgDefaultGroupProps: {
+    stgGroups: prev->Option.map(p => p.stgGroups)->Option.getOr([]),
+    stgHotkeys: prev->Option.map(p => p.stgHotkeys)->Option.getOr([]),
+    stgDefaultGroupProps: prev
+    ->Option.map(p => p.stgDefaultGroupProps)
+    ->Option.getOr({
       prependTitleToWindow: false,
       showNotificationAfterMovingTabIntoThisGroup: false,
-    },
+    }),
   }
 
   await DriveClient.pushConfig(config)

@@ -2,6 +2,7 @@
   import ContainerList from "./ContainerList.svelte";
   import ConflictList from "./ConflictList.svelte";
   import ImportExport from "./ImportExport.svelte";
+  import StgPanel from "./StgPanel.svelte";
   import DrivePanel from "./DrivePanel.svelte";
   import SettingsPanel from "./SettingsPanel.svelte";
 
@@ -23,6 +24,7 @@
   <ContainerList bind:this={containerList} />
   <ConflictList bind:this={conflictList} />
   <ImportExport {onImported} />
+  <StgPanel {onImported} />
   <DrivePanel onSynced={onImported} />
   <SettingsPanel />
 </div>

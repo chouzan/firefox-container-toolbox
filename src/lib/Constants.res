@@ -132,4 +132,7 @@ let action = {
   "syncPush": "SYNC_PUSH",
   "forcePushLocal": "FORCE_PUSH_LOCAL",
   "clearRemote": "CLEAR_REMOTE",
+  "previewStgBackup": "PREVIEW_STG_BACKUP",
+  "confirmStgImport": "CONFIRM_STG_IMPORT",
+  "generateStgBackup": "GENERATE_STG_BACKUP",
 }

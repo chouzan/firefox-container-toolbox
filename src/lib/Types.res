@@ -30,6 +30,7 @@ type stgGroupConfig = {
   showNotificationAfterMovingTabIntoThisGroup: bool,
   catchTabRules: string,
   moveToGroupIfNoneCatchTabRules: Nullable.t<int>,
+  tabs: array<JSON.t>,
 }
 
 @genType
@@ -59,6 +60,7 @@ type containerToolboxConfig = {
   stgGroups: array<stgGroupConfig>,
   stgHotkeys: array<stgHotkeyConfig>,
   stgDefaultGroupProps: stgDefaultGroupProps,
+  stgVersion?: string,
 }
 
 @genType
