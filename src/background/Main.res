@@ -182,8 +182,7 @@ MessageRouter.handleUnit(Constants.action["clearRemote"], async () => {
 MessageRouter.handle(Constants.action["previewStgBackup"], async (payload: JSON.t) => {
   switch StgBridge.parseBackup(payload) {
   | None => throw(Errors.make(StgBackupParseFailed, "Invalid STG backup format"))
-  | Some(parsed) =>
-    // Merge STG data into stored config
+  | Some({config: parsed, orphanedTabs}) =>
     let lastConfig = await StorageManager.getLastConfig()
     let config = switch lastConfig->Nullable.toOption {
     | Some(prev) => {
@@ -205,22 +204,51 @@ MessageRouter.handle(Constants.action["previewStgBackup"], async (payload: JSON.
     let existingNames = existingContainers->Array.map(c => c.name)->Set.fromArray
     let missingContainers = referencedNames->Array.filter(n => !(existingNames->Set.has(n)))
 
+    let backupContainers = StgBridge.extractBackupContainers(payload)
+    let mismatchedContainers = backupContainers->Array.filterMap(bc => {
+      existingContainers
+      ->Array.find(ec => ec.name == bc.name)
+      ->Option.flatMap(
+        ec => {
+          let colorMismatch = (ec.color :> string) != bc.color
+          let iconMismatch = (ec.icon :> string) != bc.icon
+          if colorMismatch || iconMismatch {
+            Some({
+              "name": bc.name,
+              "backupColor": bc.color,
+              "backupIcon": bc.icon,
+              "localColor": (ec.color :> string),
+              "localIcon": (ec.icon :> string),
+            })
+          } else {
+            None
+          }
+        },
+      )
+    })
+
     {
       "groupCount": parsed.stgGroups->Array.length,
       "hotkeyCount": parsed.stgHotkeys->Array.length,
       "containerCount": referencedNames->Array.length,
       "missingContainers": missingContainers,
+      "mismatchedContainers": mismatchedContainers,
+      "backupContainers": backupContainers,
+      "orphanedTabs": orphanedTabs,
     }
   }
 })
 
-type confirmPayload = {createContainers: bool}
+type backupContainer = {name: string, color: string, icon: string}
+type confirmPayload = {
+  createContainers: bool,
+  backupContainers: array<backupContainer>,
+}
 
 // Step 2: Confirm — import with or without creating missing containers
 MessageRouter.handle(Constants.action["confirmStgImport"], async (p: confirmPayload) => {
   let lastConfig = await StorageManager.getLastConfig()
 
-  // Re-parse from stored config (preview already validated)
   let config = switch lastConfig->Nullable.toOption {
   | None => throw(Errors.make(ConfigInvalid, "No config — run preview first"))
   | Some(config) => config
@@ -231,13 +259,20 @@ MessageRouter.handle(Constants.action["confirmStgImport"], async (p: confirmPayl
     let existingContainers = await ContainerManager.listContainers()
     let existingNames = existingContainers->Array.map(c => c.name)->Set.fromArray
 
+    // Build lookup from backup containers for colour/icon
+    let backupLookup: Dict.t<backupContainer> = Dict.make()
+    p.backupContainers->Array.forEach(bc => {
+      backupLookup->Dict.set(bc.name, bc)
+    })
+
     for idx in 0 to referencedNames->Array.length - 1 {
       let name = referencedNames->Array.getUnsafe(idx)
       if !(existingNames->Set.has(name)) {
+        let bc = backupLookup->Dict.get(name)
         let _ = await ContainerManager.createContainer(
           ~name,
-          ~color=(Constants.defaultColor :> string),
-          ~icon=(Constants.defaultIcon :> string),
+          ~color=bc->Option.map(c => c.color)->Option.getOr((Constants.defaultColor :> string)),
+          ~icon=bc->Option.map(c => c.icon)->Option.getOr((Constants.defaultIcon :> string)),
         )
       }
     }

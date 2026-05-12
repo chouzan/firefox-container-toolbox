@@ -7,11 +7,34 @@
 
   let { onImported }: Props = $props();
 
+  interface ContainerMismatch {
+    name: string;
+    backupColor: string;
+    backupIcon: string;
+    localColor: string;
+    localIcon: string;
+  }
+
+  interface BackupContainer {
+    name: string;
+    color: string;
+    icon: string;
+  }
+
+  interface OrphanedTab {
+    group: string;
+    tab: string;
+    container: string;
+  }
+
   interface StgPreview {
     groupCount: number;
     hotkeyCount: number;
     containerCount: number;
     missingContainers: string[];
+    mismatchedContainers: ContainerMismatch[];
+    backupContainers: BackupContainer[];
+    orphanedTabs: OrphanedTab[];
   }
 
   let statusMsg = $state("");
@@ -46,7 +69,10 @@
   async function confirmImport(createContainers: boolean) {
     confirming = true;
     try {
-      await sendMessage(Action.confirmStgImport, { createContainers });
+      await sendMessage(Action.confirmStgImport, {
+        createContainers,
+        backupContainers: $state.snapshot(preview?.backupContainers ?? []),
+      });
       const missing = preview?.missingContainers ?? [];
       if (createContainers && missing.length > 0) {
         flash(`Imported — created containers: ${missing.join(", ")}`);
@@ -96,9 +122,21 @@
           <p class="text-warning">
             {preview.missingContainers.length} containers don't exist locally:
           </p>
-          <ul class="list-disc list-inside opacity-70">
+          <ul class="flex flex-col gap-1 opacity-70">
             {#each preview.missingContainers as name}
-              <li>{name}</li>
+              {@const bc = preview.backupContainers.find(
+                (c) => c.name === name,
+              )}
+              <li class="flex items-center gap-2">
+                {#if bc}
+                  <div
+                    class="usercontext-icon"
+                    data-identity-icon={bc.icon}
+                    data-identity-color={bc.color}
+                  ></div>
+                {/if}
+                <span>{name}</span>
+              </li>
             {/each}
           </ul>
           <div class="flex gap-2 flex-wrap mt-1">
@@ -124,7 +162,50 @@
               Cancel
             </button>
           </div>
-        {:else}
+        {/if}
+        {#if preview.mismatchedContainers.length > 0}
+          <p class="text-info text-xs mt-1">
+            {preview.mismatchedContainers.length} containers have different attributes
+            locally:
+          </p>
+          <ul class="flex flex-col gap-1 text-xs opacity-60">
+            {#each preview.mismatchedContainers as m}
+              <li class="flex items-center gap-2">
+                <span class="font-semibold">{m.name}</span>
+                <span class="opacity-50">backup:</span>
+                <div
+                  class="usercontext-icon"
+                  data-identity-icon={m.backupIcon}
+                  data-identity-color={m.backupColor}
+                ></div>
+                <span class="opacity-50">local:</span>
+                <div
+                  class="usercontext-icon"
+                  data-identity-icon={m.localIcon}
+                  data-identity-color={m.localColor}
+                ></div>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+        {#if preview.orphanedTabs.length > 0}
+          <p class="text-warning text-xs mt-1">
+            {preview.orphanedTabs.length} tabs had unknown container references and
+            were reassigned to their group's default:
+          </p>
+          <ul class="flex flex-col gap-0.5 text-xs opacity-60">
+            {#each preview.orphanedTabs as o}
+              <li>
+                <strong>{o.group}</strong>: {o.tab.slice(0, 50)}{o.tab.length >
+                50
+                  ? "..."
+                  : ""}
+                <span class="opacity-40">({o.container})</span>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+        {#if preview.missingContainers.length === 0}
           <p class="text-success">All containers exist locally.</p>
           <div class="flex gap-2">
             <button

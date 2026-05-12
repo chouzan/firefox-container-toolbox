@@ -32,12 +32,17 @@ let getStringArray = (obj: Dict.t<JSON.t>, key: string): array<string> =>
 
 // Container ID <-> portable name substitution
 
-let idToPortableName = (id: string): string => {
+// Resolve container ID to portable name using backup's own container map first
+let idToPortableName = (id: string, ~backupContainers: Dict.t<string>=Dict.make()): string => {
   switch Constants.specialContainersReverse->Dict.get(id) {
   | Some(name) => name
   | None =>
-    try {NameResolver.resolveIdToName(id)} catch {
-    | _ => id
+    switch backupContainers->Dict.get(id) {
+    | Some(name) => name
+    | None =>
+      try {NameResolver.resolveIdToName(id)} catch {
+      | _ => id
+      }
     }
   }
 }
@@ -118,8 +123,15 @@ let parseGroup = (fields: Dict.t<JSON.t>): Types.stgGroupConfig => {
   },
 }
 
+type orphanedTab = {"group": string, "tab": string, "container": string}
+
+type parseResult = {
+  config: Types.containerToolboxConfig,
+  orphanedTabs: array<orphanedTab>,
+}
+
 // Parse STG backup: validate version, replace IDs with portable names
-let parseBackup = (backup: JSON.t): option<Types.containerToolboxConfig> => {
+let parseBackup = (backup: JSON.t): option<parseResult> => {
   switch backup->JSON.Decode.object {
   | None => None
   | Some(obj) =>
@@ -135,18 +147,95 @@ let parseBackup = (backup: JSON.t): option<Types.containerToolboxConfig> => {
     | _ => ()
     }
 
+    // Build ID→name map from the backup's own containers dict
+    let backupContainers: Dict.t<string> = Dict.make()
+    switch obj->Dict.get("containers")->Option.flatMap(JSON.Decode.object) {
+    | Some(cDict) =>
+      cDict->Dict.forEachWithKey((value, key) => {
+        switch value->JSON.Decode.object {
+        | Some(info) =>
+          switch info->Dict.get("name")->Option.flatMap(JSON.Decode.string) {
+          | Some(name) => backupContainers->Dict.set(key, name)
+          | None => ()
+          }
+        | None => ()
+        }
+      })
+    | None => ()
+    }
+
+    let toName = id => idToPortableName(id, ~backupContainers)
+
+    // Track all known container IDs (backup dict + special)
+    let knownIds = Set.make()
+    backupContainers->Dict.keysToArray->Array.forEach(k => knownIds->Set.add(k))
+    Constants.specialContainers->Dict.forEachWithKey((v, _k) => knownIds->Set.add(v))
+
     let groupsRaw = switch obj->Dict.get("groups")->Option.flatMap(JSON.Decode.array) {
     | Some(arr) => arr
     | None => []
     }
 
+    let orphanedTabs: array<{"group": string, "tab": string, "container": string}> = []
+
     let groups = groupsRaw->Array.filterMap(g => {
       switch g->JSON.Decode.object {
       | Some(fields) =>
-        // Replace container IDs with portable names
-        replaceContainerRef(fields, "newTabContainer", idToPortableName)
-        replaceContainerArrayRef(fields, "catchTabContainers", idToPortableName)
-        replaceContainerArrayRef(fields, "excludeContainersForReOpen", idToPortableName)
+        let groupTitle = getString(fields, "title", "Untitled")
+        // Replace container IDs with portable names using backup's map
+        replaceContainerRef(fields, "newTabContainer", toName)
+        replaceContainerArrayRef(fields, "catchTabContainers", toName)
+        replaceContainerArrayRef(fields, "excludeContainersForReOpen", toName)
+
+        // Get the group's newTabContainer (already converted to name)
+        let groupContainer =
+          fields
+          ->Dict.get("newTabContainer")
+          ->Option.flatMap(JSON.Decode.string)
+          ->Option.getOr("$default")
+
+        // Replace cookieStoreId in each tab, auto-fix orphaned refs
+        switch fields->Dict.get("tabs")->Option.flatMap(JSON.Decode.array) {
+        | Some(tabs) =>
+          fields->Dict.set(
+            "tabs",
+            JSON.Array(
+              tabs->Array.map(tab => {
+                switch tab->JSON.Decode.object {
+                | Some(tabObj) =>
+                  let currentId =
+                    tabObj
+                    ->Dict.get("cookieStoreId")
+                    ->Option.flatMap(JSON.Decode.string)
+                    ->Option.getOr("")
+
+                  if currentId != "" && !(knownIds->Set.has(currentId)) {
+                    // Orphaned: ID not in backup's containers dict
+                    let tabTitle =
+                      tabObj
+                      ->Dict.get("title")
+                      ->Option.flatMap(JSON.Decode.string)
+                      ->Option.getOr("Untitled")
+                    orphanedTabs
+                    ->Array.push({
+                      "group": groupTitle,
+                      "tab": tabTitle,
+                      "container": currentId,
+                    })
+                    ->ignore
+                    // Auto-fix: reassign to group's newTabContainer
+                    tabObj->Dict.set("cookieStoreId", JSON.String(groupContainer))
+                  } else {
+                    replaceContainerRef(tabObj, "cookieStoreId", toName)
+                  }
+                  JSON.Object(tabObj)
+                | None => tab
+                }
+              }),
+            ),
+          )
+        | None => ()
+        }
         // Strip runtime fields (keep tabs for round-trip)
         fields->Dict.delete("id")
         fields->Dict.delete("bookmarkId")
@@ -216,16 +305,19 @@ let parseBackup = (backup: JSON.t): option<Types.containerToolboxConfig> => {
     let stgVersion = obj->Dict.get("version")->Option.flatMap(JSON.Decode.string)
 
     Some({
-      Types.version: 1,
-      meta: {
-        exportedAt: Date.make()->Date.toISOString,
-        exportedFrom: `container-toolbox@${Constants.extensionVersion}`,
+      config: {
+        Types.version: 1,
+        meta: {
+          exportedAt: Date.make()->Date.toISOString,
+          exportedFrom: `container-toolbox@${Constants.extensionVersion}`,
+        },
+        containers: [],
+        stgGroups: groups,
+        stgHotkeys: hotkeys,
+        stgDefaultGroupProps: defaultGroupProps,
+        ?stgVersion,
       },
-      containers: [],
-      stgGroups: groups,
-      stgHotkeys: hotkeys,
-      stgDefaultGroupProps: defaultGroupProps,
-      ?stgVersion,
+      orphanedTabs,
     })
   }
 }
@@ -240,7 +332,20 @@ let generateBackup = (config: Types.containerToolboxConfig): JSON.t => {
         ("iconColor", JSON.String(group.iconColor)),
         ("iconUrl", JSON.Null),
         ("iconViewType", JSON.String(group.iconViewType)),
-        ("tabs", JSON.Array(group.tabs)),
+        (
+          "tabs",
+          JSON.Array(
+            group.tabs->Array.map(tab => {
+              switch tab->JSON.Decode.object {
+              | Some(tabObj) =>
+                let resolved = Dict.fromArray(tabObj->Dict.toArray)
+                replaceContainerRef(resolved, "cookieStoreId", portableNameToId)
+                JSON.Object(resolved)
+              | None => tab
+              }
+            }),
+          ),
+        ),
         ("isArchive", JSON.Boolean(group.isArchive)),
         ("discardTabsAfterHide", JSON.Boolean(group.discardTabsAfterHide)),
         ("discardExcludeAudioTabs", JSON.Boolean(group.discardExcludeAudioTabs)),
@@ -387,6 +492,48 @@ let extractContainerNames = (groups: array<Types.stgGroupConfig>): array<string>
     })
   })
   names->Set.values->Iterator.toArray
+}
+
+type containerInfo = {
+  name: string,
+  color: string,
+  icon: string,
+}
+
+// Extract container details from STG backup's containers dict
+let extractBackupContainers = (backup: JSON.t): array<containerInfo> => {
+  switch backup->JSON.Decode.object {
+  | None => []
+  | Some(obj) =>
+    switch obj->Dict.get("containers")->Option.flatMap(JSON.Decode.object) {
+    | None => []
+    | Some(cDict) =>
+      let result: array<containerInfo> = []
+      cDict->Dict.forEachWithKey((value, _key) => {
+        switch value->JSON.Decode.object {
+        | Some(info) =>
+          let name = info->Dict.get("name")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
+          if name != "" {
+            result
+            ->Array.push({
+              name,
+              color: info
+              ->Dict.get("color")
+              ->Option.flatMap(JSON.Decode.string)
+              ->Option.getOr("blue"),
+              icon: info
+              ->Dict.get("icon")
+              ->Option.flatMap(JSON.Decode.string)
+              ->Option.getOr("fingerprint"),
+            })
+            ->ignore
+          }
+        | None => ()
+        }
+      })
+      result
+    }
+  }
 }
 
 let createBlobUrl: string => string = %raw(`
