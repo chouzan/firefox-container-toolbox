@@ -65,6 +65,7 @@ const buildOptions = {
     sveltePlugin({
       compilerOptions: {
         css: "injected",
+        fragments: "tree",
       },
     }),
     copyPlugin,

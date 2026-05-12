@@ -176,6 +176,21 @@ let parseBackup = (backup: JSON.t): option<parseResult> => {
     | None => []
     }
 
+    // Build groupId → title map before groups are mutated
+    let groupIdToTitle: Dict.t<string> = Dict.make()
+    groupsRaw->Array.forEach(g => {
+      switch g->JSON.Decode.object {
+      | Some(gObj) =>
+        let id = gObj->Dict.get("id")->Option.flatMap(JSON.Decode.float)->Option.map(Float.toInt)
+        let title = gObj->Dict.get("title")->Option.flatMap(JSON.Decode.string)
+        switch (id, title) {
+        | (Some(id), Some(title)) => groupIdToTitle->Dict.set(id->Int.toString, title)
+        | _ => ()
+        }
+      | None => ()
+      }
+    })
+
     let orphanedTabs: array<{"group": string, "tab": string, "container": string}> = []
 
     let groups = groupsRaw->Array.filterMap(g => {
@@ -258,20 +273,7 @@ let parseBackup = (backup: JSON.t): option<parseResult> => {
             ->Option.map(Float.toInt)
 
           let groupTitle = switch groupId {
-          | Some(id) if id > 0 =>
-            groupsRaw
-            ->Array.find(g =>
-              g
-              ->JSON.Decode.object
-              ->Option.flatMap(gObj => gObj->Dict.get("id")->Option.flatMap(JSON.Decode.float))
-              ->Option.map(gid => gid->Float.toInt == id)
-              ->Option.getOr(false)
-            )
-            ->Option.flatMap(g =>
-              g
-              ->JSON.Decode.object
-              ->Option.flatMap(gObj => gObj->Dict.get("title")->Option.flatMap(JSON.Decode.string))
-            )
+          | Some(id) if id > 0 => groupIdToTitle->Dict.get(id->Int.toString)
           | _ => None
           }
 

@@ -21,6 +21,8 @@
     "format": "bun run format:res && bun run format:js",
     "format:res": "rescript format",
     "format:js": "prettier --write src",
+    "test": "bun run build:res && vitest run",
+    "test:watch": "vitest",
     "open:firefox": "web-ext run --source-dir=dist --start-url about:addons --pref=ui.systemUsesDarkTheme=1"
   },
   "devDependencies": {
@@ -37,6 +39,7 @@
     "svelte-check": "^4.4.8",
     "tailwindcss": "^4.2.4",
     "typescript": "^5.7.0",
+    "vitest": "^4.1.6",
     "web-ext": "^8.4.0"
   }
 }
