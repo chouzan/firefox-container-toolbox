@@ -31,10 +31,14 @@ describe("Errors", () => {
       expect(info.code).toBe("INTERNAL_ERROR");
     });
 
-    it("throws on null/undefined (no crash guard)", () => {
-      // ReScript's toInfo doesn't guard against null — callers should handle
-      expect(() => toInfo(undefined as any)).toThrow();
-      expect(() => toInfo(null as any)).toThrow();
+    it("handles null/undefined gracefully", () => {
+      const fromUndefined = toInfo(undefined as any);
+      expect(fromUndefined.code).toBe("INTERNAL_ERROR");
+      expect(fromUndefined.message).toBe("Unknown error");
+
+      const fromNull = toInfo(null as any);
+      expect(fromNull.code).toBe("INTERNAL_ERROR");
+      expect(fromNull.message).toBe("Unknown error");
     });
   });
 });

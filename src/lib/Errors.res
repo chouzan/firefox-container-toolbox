@@ -37,12 +37,19 @@ let make = (code: errorCode, message: string) => {
   AppError({code, message})
 }
 
+// JS can reject with null/undefined — guard before pattern matching
+let isNullish: exn => bool = %raw(`function(x) { return x == null }`)
+
 let toInfo = (err: exn): errorInfo => {
-  switch err {
-  | AppError(info) => info
-  | JsExn(jsErr) =>
-    let msg = jsErr->JsExn.message->Option.getOr("Unknown JS error")
-    {code: InternalError, message: msg}
-  | _ => {code: InternalError, message: "Unknown error"}
+  if isNullish(err) {
+    {code: InternalError, message: "Unknown error"}
+  } else {
+    switch err {
+    | AppError(info) => info
+    | JsExn(jsErr) =>
+      let msg = jsErr->JsExn.message->Option.getOr("Unknown JS error")
+      {code: InternalError, message: msg}
+    | _ => {code: InternalError, message: "Unknown error"}
+    }
   }
 }

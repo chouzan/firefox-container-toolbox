@@ -132,6 +132,8 @@ type parseResult = {
 
 // Parse STG backup: validate version, replace IDs with portable names
 let parseBackup = (backup: JSON.t): option<parseResult> => {
+  // Deep clone to avoid mutating the caller's objects
+  let backup = backup->JSON.stringify->JSON.parseOrThrow
   switch backup->JSON.Decode.object {
   | None => None
   | Some(obj) =>

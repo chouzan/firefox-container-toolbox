@@ -256,6 +256,13 @@ describe("STG round-trip", () => {
     expect(group.bookmarkId).toBeUndefined();
     expect(group.iconUrl).toBeUndefined();
   });
+
+  it("does not mutate the input object", () => {
+    const input = clone(fullBackup);
+    const snapshot = JSON.stringify(input);
+    parseBackup(input);
+    expect(JSON.stringify(input)).toBe(snapshot);
+  });
 });
 
 describe("extractBackupContainers", () => {

@@ -138,7 +138,6 @@
       Options
     </button>
   </section>
-
 </div>
 
 <Toast />
