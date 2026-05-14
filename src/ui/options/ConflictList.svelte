@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Action, sendMessage } from "../shared/messaging.js";
+  import { toast } from "../shared/toast.js";
 
   interface Conflict {
     id: string;
@@ -28,7 +29,9 @@
         action,
       });
     } catch (err) {
-      console.error("Failed to resolve conflict:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Failed to resolve conflict",
+      );
     } finally {
       resolving = null;
     }

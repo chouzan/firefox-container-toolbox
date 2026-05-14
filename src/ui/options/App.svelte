@@ -5,6 +5,7 @@
   import StgPanel from "./StgPanel.svelte";
   import DrivePanel from "./DrivePanel.svelte";
   import SettingsPanel from "./SettingsPanel.svelte";
+  import Toast from "../shared/Toast.svelte";
 
   let containerList: ReturnType<typeof ContainerList>;
   let conflictList: ReturnType<typeof ConflictList>;
@@ -28,3 +29,5 @@
   <DrivePanel onSynced={onImported} />
   <SettingsPanel />
 </div>
+
+<Toast />

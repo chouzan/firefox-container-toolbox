@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Action, sendMessage } from "../shared/messaging.js";
+  import { toast } from "../shared/toast.js";
 
   interface Props {
     onImported?: () => void;
@@ -37,18 +38,10 @@
     orphanedTabs: OrphanedTab[];
   }
 
-  let statusMsg = $state("");
-  let statusIsError = $state(false);
   let generating = $state(false);
   let preview = $state<StgPreview | null>(null);
   let confirming = $state(false);
   let fileInput: HTMLInputElement;
-
-  function flash(msg: string, isError = false) {
-    statusMsg = msg;
-    statusIsError = isError;
-    setTimeout(() => (statusMsg = ""), 5000);
-  }
 
   async function parseStgBackup(e: Event) {
     const input = e.target as HTMLInputElement;
@@ -60,7 +53,7 @@
       const data = JSON.parse(text);
       preview = await sendMessage<StgPreview>(Action.previewStgBackup, data);
     } catch (err) {
-      flash(err instanceof Error ? err.message : "Parse failed", true);
+      toast.error(err instanceof Error ? err.message : "Parse failed");
     } finally {
       input.value = "";
     }
@@ -75,14 +68,14 @@
       });
       const missing = preview?.missingContainers ?? [];
       if (createContainers && missing.length > 0) {
-        flash(`Imported — created containers: ${missing.join(", ")}`);
+        toast.success(`Imported — created containers: ${missing.join(", ")}`);
       } else {
-        flash("STG backup imported");
+        toast.success("STG backup imported");
       }
       preview = null;
       onImported?.();
     } catch (err) {
-      flash(err instanceof Error ? err.message : "Import failed", true);
+      toast.error(err instanceof Error ? err.message : "Import failed");
     } finally {
       confirming = false;
     }
@@ -96,9 +89,9 @@
     generating = true;
     try {
       await sendMessage(Action.generateStgBackup);
-      flash("STG backup generated — check downloads");
+      toast.success("STG backup generated — check downloads");
     } catch (err) {
-      flash(err instanceof Error ? err.message : "Generation failed", true);
+      toast.error(err instanceof Error ? err.message : "Generation failed");
     } finally {
       generating = false;
     }
@@ -251,14 +244,5 @@
       onchange={parseStgBackup}
       hidden
     />
-    {#if statusMsg}
-      <p
-        class="text-xs"
-        class:text-success={!statusIsError}
-        class:text-error={statusIsError}
-      >
-        {statusMsg}
-      </p>
-    {/if}
   </div>
 </div>

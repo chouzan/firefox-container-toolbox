@@ -7,6 +7,8 @@
     type ContainerData,
     type ReconcileResultData,
   } from "../shared/messaging.js";
+  import { toast } from "../shared/toast.js";
+  import Toast from "../shared/Toast.svelte";
 
   interface StatusData {
     containerCount: number;
@@ -19,7 +21,6 @@
 
   let status = $state<StatusData | null>(null);
   let containers = $state<ContainerData[]>([]);
-  let error = $state("");
   let reconcileLabel = $state("Reconcile");
   let reconciling = $state(false);
 
@@ -38,7 +39,7 @@
       status = await sendMessage<StatusData>(Action.getStatus);
       containers = await sendMessage<ContainerData[]>(Action.getContainers);
     } catch (err) {
-      error = err instanceof Error ? err.message : "Failed to load";
+      toast.error(err instanceof Error ? err.message : "Failed to load");
     }
   }
 
@@ -52,7 +53,7 @@
       reconcileLabel = formatReconcileResult(result);
       await loadData();
     } catch (err) {
-      error = err instanceof Error ? err.message : "Reconcile failed";
+      toast.error(err instanceof Error ? err.message : "Reconcile failed");
       reconcileLabel = "Reconcile";
     } finally {
       reconciling = false;
@@ -138,9 +139,6 @@
     </button>
   </section>
 
-  {#if error}
-    <div role="alert" class="alert alert-error text-sm p-2">
-      {error}
-    </div>
-  {/if}
 </div>
+
+<Toast />

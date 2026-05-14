@@ -6,6 +6,7 @@
     formatReconcileResult,
     type ReconcileResultData,
   } from "../shared/messaging.js";
+  import { toast } from "../shared/toast.js";
 
   interface Props {
     onImported?: () => void;
@@ -13,16 +14,8 @@
 
   let { onImported }: Props = $props();
 
-  let statusMsg = $state("");
-  let statusIsError = $state(false);
   let reconciling = $state(false);
   let fileInput: HTMLInputElement;
-
-  function flash(msg: string, isError = false) {
-    statusMsg = msg;
-    statusIsError = isError;
-    setTimeout(() => (statusMsg = ""), 4000);
-  }
 
   async function exportConfig() {
     try {
@@ -38,9 +31,9 @@
       a.download = `container-toolbox-config-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      flash("Config exported");
+      toast.success("Config exported");
     } catch (err) {
-      flash(err instanceof Error ? err.message : "Export failed", true);
+      toast.error(err instanceof Error ? err.message : "Export failed");
     }
   }
 
@@ -56,10 +49,10 @@
         Action.importConfig,
         data,
       );
-      flash(`Imported: ${formatReconcileResult(result)}`);
+      toast.success(`Imported: ${formatReconcileResult(result)}`);
       onImported?.();
     } catch (err) {
-      flash(err instanceof Error ? err.message : "Import failed", true);
+      toast.error(err instanceof Error ? err.message : "Import failed");
     } finally {
       input.value = "";
     }
@@ -71,10 +64,10 @@
       const result = await sendMessage<ReconcileResultData>(
         Action.reconcileNow,
       );
-      flash(formatReconcileResult(result));
+      toast.success(formatReconcileResult(result));
       onImported?.();
     } catch (err) {
-      flash(err instanceof Error ? err.message : "Reconcile failed", true);
+      toast.error(err instanceof Error ? err.message : "Reconcile failed");
     } finally {
       reconciling = false;
     }
@@ -108,14 +101,5 @@
       onchange={handleFile}
       hidden
     />
-    {#if statusMsg}
-      <p
-        class="text-xs"
-        class:text-success={!statusIsError}
-        class:text-error={statusIsError}
-      >
-        {statusMsg}
-      </p>
-    {/if}
   </div>
 </div>

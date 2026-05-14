@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Action, sendMessage } from "../shared/messaging.js";
+  import { toast } from "../shared/toast.js";
 
   interface DriveStatus {
     authenticated: boolean;
@@ -21,22 +22,6 @@
   let clientSecret = $state("");
   let showCredentials = $state(false);
   let busy = $state("");
-  let error = $state("");
-  let success = $state("");
-
-  function flash(msg: string, isError = false) {
-    if (isError) {
-      error = msg;
-      success = "";
-    } else {
-      success = msg;
-      error = "";
-    }
-    setTimeout(() => {
-      error = "";
-      success = "";
-    }, 5000);
-  }
 
   function formatTime(iso: string | null): string {
     if (!iso) return "never";
@@ -53,7 +38,7 @@
 
   async function saveCredentials() {
     if (!clientId.trim() || !clientSecret.trim()) {
-      flash("Both fields are required", true);
+      toast.error("Both fields are required");
       return;
     }
     try {
@@ -64,9 +49,9 @@
       });
       showCredentials = false;
       await load();
-      flash("Credentials saved");
+      toast.success("Credentials saved");
     } catch (err) {
-      flash(err instanceof Error ? err.message : "Failed to save", true);
+      toast.error(err instanceof Error ? err.message : "Failed to save");
     } finally {
       busy = "";
     }
@@ -77,9 +62,9 @@
       busy = "Connecting...";
       await sendMessage(Action.driveAuthenticate);
       await load();
-      flash("Connected to Drive");
+      toast.success("Connected to Drive");
     } catch (err) {
-      flash(err instanceof Error ? err.message : "Auth failed", true);
+      toast.error(err instanceof Error ? err.message : "Auth failed");
     } finally {
       busy = "";
     }
@@ -90,9 +75,9 @@
       busy = "Disconnecting...";
       await sendMessage(Action.driveRevoke);
       await load();
-      flash("Disconnected");
+      toast.success("Disconnected");
     } catch (err) {
-      flash(err instanceof Error ? err.message : "Failed", true);
+      toast.error(err instanceof Error ? err.message : "Disconnect failed");
     } finally {
       busy = "";
     }
@@ -104,9 +89,9 @@
       await sendMessage(Action.syncPull);
       await load();
       onSynced?.();
-      flash("Pulled and reconciled");
+      toast.success("Pulled and reconciled");
     } catch (err) {
-      flash(err instanceof Error ? err.message : "Pull failed", true);
+      toast.error(err instanceof Error ? err.message : "Pull failed");
     } finally {
       busy = "";
     }
@@ -117,9 +102,9 @@
       busy = "Pushing...";
       await sendMessage(Action.syncPush);
       await load();
-      flash("Pushed to Drive");
+      toast.success("Pushed to Drive");
     } catch (err) {
-      flash(err instanceof Error ? err.message : "Push failed", true);
+      toast.error(err instanceof Error ? err.message : "Push failed");
     } finally {
       busy = "";
     }
@@ -131,9 +116,9 @@
       busy = "Force pushing...";
       await sendMessage(Action.forcePushLocal);
       await load();
-      flash("Force pushed to Drive");
+      toast.success("Force pushed to Drive");
     } catch (err) {
-      flash(err instanceof Error ? err.message : "Failed", true);
+      toast.error(err instanceof Error ? err.message : "Force push failed");
     } finally {
       busy = "";
     }
@@ -145,9 +130,9 @@
       busy = "Clearing...";
       await sendMessage(Action.clearRemote);
       await load();
-      flash("Remote config cleared");
+      toast.success("Remote config cleared");
     } catch (err) {
-      flash(err instanceof Error ? err.message : "Failed", true);
+      toast.error(err instanceof Error ? err.message : "Clear failed");
     } finally {
       busy = "";
     }
@@ -275,11 +260,5 @@
       </div>
     {/if}
 
-    {#if error}
-      <p class="text-xs text-error">{error}</p>
-    {/if}
-    {#if success}
-      <p class="text-xs text-success">{success}</p>
-    {/if}
   </div>
 </div>

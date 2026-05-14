@@ -11,6 +11,7 @@
     shortId,
     type ContainerData,
   } from "../shared/messaging.js";
+  import { toast } from "../shared/toast.js";
 
   let containers = $state<ContainerData[]>([]);
   let showForm = $state(false);
@@ -18,26 +19,17 @@
   let formName = $state("");
   let selectedColor = $state(defaultColor);
   let selectedIcon = $state(defaultIcon);
-  let statusMsg = $state("");
-  let statusIsError = $state(false);
 
   let draggedIdx = $state<number | null>(null);
   let dragOverIdx = $state<number | null>(null);
   let moving = $state(false);
 
-  function flash(msg: string, isError = false) {
-    statusMsg = msg;
-    statusIsError = isError;
-    setTimeout(() => (statusMsg = ""), 4000);
-  }
-
   export const load = async () => {
     try {
       containers = await sendMessage<ContainerData[]>(Action.getContainers);
     } catch (err) {
-      flash(
+      toast.error(
         err instanceof Error ? err.message : "Failed to load containers",
-        true,
       );
     }
   };
@@ -66,7 +58,7 @@
   async function saveForm() {
     const name = formName.trim();
     if (!name) {
-      flash("Name is required", true);
+      toast.error("Name is required");
       return;
     }
 
@@ -86,7 +78,7 @@
       closeForm();
       await load();
     } catch (err) {
-      flash(err instanceof Error ? err.message : "Save failed", true);
+      toast.error(err instanceof Error ? err.message : "Save failed");
     }
   }
 
@@ -103,7 +95,7 @@
       });
       await load();
     } catch (err) {
-      flash(err instanceof Error ? err.message : "Delete failed", true);
+      toast.error(err instanceof Error ? err.message : "Delete failed");
     }
   }
 
@@ -145,7 +137,7 @@
         position: toIdx,
       });
     } catch (err) {
-      flash(err instanceof Error ? err.message : "Reorder failed", true);
+      toast.error(err instanceof Error ? err.message : "Reorder failed");
       await load();
     } finally {
       moving = false;
@@ -297,14 +289,5 @@
       </div>
     {/if}
 
-    {#if statusMsg}
-      <p
-        class="text-xs"
-        class:text-success={!statusIsError}
-        class:text-error={statusIsError}
-      >
-        {statusMsg}
-      </p>
-    {/if}
   </div>
 </div>
